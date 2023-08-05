@@ -1,7 +1,0 @@
-{
-    "compilerOptions": {
-      "target": "es6",  // Use the appropriate target version here
-      // other options...
-    }
-  }
-  
