@@ -1,7 +1,10 @@
-import { exec } from 'child_process';
+import simpleGit, { SimpleGit } from 'simple-git/promise';
 
 class VersionControlSystem {
+  private git: SimpleGit;
+
   constructor(private vcsName: string) {
+    this.git = simpleGit(); // Initialize simple-git
     this.initializeVersionControlSystem();
   }
 
@@ -11,15 +14,9 @@ class VersionControlSystem {
 
   async getConflicts(filePath?: string) {
     try {
-      const command = `git diff --name-only --diff-filter=U ${filePath || ''}`;
-      const { stdout, stderr } = await exec(command);
+      const statusSummary = await this.git.status();
 
-      if (stderr) {
-        throw new Error(`Error fetching conflicts: ${stderr}`);
-      }
-
-      // Extract conflicted files from stdout
-      const conflicts = stdout.trim().split('\n');
+      const conflicts = statusSummary.files.filter(file => file.conflicted);
 
       return conflicts;
     } catch (error) {
@@ -30,11 +27,7 @@ class VersionControlSystem {
 
   async saveResolvedConflicts(resolvedConflicts) {
     try {
-      const commitMessage = 'Resolved conflicts'; // Replace with appropriate commit message
-      const commitCommand = `git commit -m "${commitMessage}"`;
-
-      await exec(commitCommand);
-
+      await this.git.commit('Resolved conflicts');
       console.log('Resolved conflicts saved to version control system.');
     } catch (error) {
       console.error('Error saving resolved conflicts:', error);
@@ -44,10 +37,7 @@ class VersionControlSystem {
 
   async rollbackFileChanges(filePath) {
     try {
-      const checkoutCommand = `git checkout ${filePath}`;
-
-      await exec(checkoutCommand);
-
+      await this.git.checkout(filePath);
       console.log(`Rolling back changes for ${filePath}`);
     } catch (error) {
       console.error('Error rolling back changes:', error);
@@ -57,18 +47,8 @@ class VersionControlSystem {
 
   async getResolvedConflicts() {
     try {
-      const logCommand = `git log -S '<<<<<<<'`; // Replace with appropriate log command
-
-      const { stdout, stderr } = await exec(logCommand);
-
-      if (stderr) {
-        throw new Error(`Error fetching resolved conflicts: ${stderr}`);
-      }
-
-      // Process stdout to extract commit history
-      const commitHistory = stdout.trim().split('\n');
-
-      return commitHistory;
+      const log = await this.git.log({ '--grep': 'Resolved conflicts' });
+      return log.all;
     } catch (error) {
       console.error('Error fetching resolved conflicts:', error);
       throw new Error(`Error fetching resolved conflicts: ${error.message}`);
@@ -76,7 +56,31 @@ class VersionControlSystem {
   }
 
   async getSupportedStrategies() {
-    return ['automatic', 'manual'];
+    return ['automatic', 'manual', 'content-based']; // Added more strategies
+  }
+
+  async showFileChanges(filePath) {
+    try {
+      const diff = await this.git.diff([filePath]);
+      console.log('File changes:', diff);
+    } catch (error) {
+      console.error('Error fetching file changes:', error);
+      throw new Error(`Error fetching file changes: ${error.message}`);
+    }
+  }
+
+  // Additional features could be added here
+  async mergeConflicts() {
+    // Logic to merge conflicts
+  }
+
+  async trackConflictHistory() {
+    // Logic to track conflict history
+  }
+
+  // Integrate with other version control systems
+  async integrateWithOtherVCS() {
+    // Logic to integrate with other version control systems
   }
 }
 
