@@ -1,6 +1,5 @@
 {
-  "compilerOptions": {
-    "moduleResolution": "node",
-    // other options...
+  "scripts": {
+    "test": "echo 'Running tests'"
   }
 }
